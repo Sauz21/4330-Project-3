@@ -1,15 +1,60 @@
-function AppLayout({ children }) {
+﻿import { useEffect, useRef } from "react";
+export default function AppLayout({
+  children,
+  page,
+  navigate,
+  canRecommend,
+  savedCount,
+}) {
+  const main = useRef(null);
+  useEffect(() => {
+    main.current?.focus();
+    window.scrollTo(0, 0);
+  }, [page]);
+  const links = [
+    ["home", "⌂", "Home"],
+    ...(canRecommend ? [["recommendations", "✧", "Recommendations"]] : []),
+    ["packing", "✓", "Packing"],
+    ["saved", "♡", "Saved Trips"],
+  ];
   return (
     <div className="app-shell">
-      <a className="skip-link" href="#main-content">Skip to content</a>
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
       <header className="app-header">
-        <span className="app-name">Project 3</span>
-        <span className="course-label">CSC 4330</span>
+        <button
+          className="brand"
+          onClick={() => navigate("home")}
+          aria-label="EscapePlan home"
+        >
+          <span className="brand-mark">↗</span> EscapePlan
+          <span className="brand-dot">.</span>
+        </button>
+        <button className="saved-link" onClick={() => navigate("saved")}>
+          ♡ <span>Saved trips</span>
+          <span className="count">{savedCount}</span>
+        </button>
       </header>
-      <main id="main-content" tabIndex={-1}>{children}</main>
-      <footer className="app-footer">CSC 4330 · Group project</footer>
+      <main id="main-content" ref={main} tabIndex={-1}>
+        {children}
+      </main>
+      <footer className="app-footer">
+        <span>Small plans. Big possibilities.</span>
+        <span>● Made for offline adventures</span>
+      </footer>
+      <nav className="bottom-nav" aria-label="Main navigation">
+        {links.map(([target, icon, label]) => (
+          <button
+            key={target}
+            aria-current={page === target ? "page" : undefined}
+            onClick={() => navigate(target)}
+          >
+            <span aria-hidden="true">{icon}</span>
+            {label}
+          </button>
+        ))}
+      </nav>
     </div>
-  )
+  );
 }
-
-export default AppLayout

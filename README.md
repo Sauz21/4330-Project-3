@@ -1,62 +1,52 @@
-# CSC 4330 — Project 3
+﻿# EscapePlan
 
-React + JavaScript foundation for our group application, built with [Vite](https://vite.dev/guide/).
+A mobile-first vacation recommendation and packing assistant built in the existing React 19 + Vite project with plain JavaScript and CSS.
 
-## Get started
+## Run locally
 
-Install Node.js 22.12 or newer (Node 22 recommended) and npm. If you use nvm, run `nvm install` and `nvm use` in this folder.
+Use the Node version in `.nvmrc` (Node 22), then run:
 
 ```sh
-git clone https://github.com/Sauz21/4330-Project-3.git
-cd 4330-Project-3
 npm ci
 npm run dev
 ```
 
-Open the local URL printed in the terminal. Changes to source files update the page automatically.
+Dependency installation requires access to npm. Once dependencies are installed, the application runs against the local Vite server without internet access. Production files in `dist/` can be served by a local static server (`npm run preview` after building). The app makes no API or external asset requests. It is a Vite web application, not an APK, and does not install a service worker for hosted-site offline reloads.
+
+## Features
+
+- Home, preferences quiz, top-three recommendations, destination details, packing checklists, and saved trips.
+- Exactly 15 sample destinations: three each for Beach, Mountains, City, Theme Park, and Camping.
+- Category match: 5 points; budget match: 3; travel preference match: 2; each distinct matching activity: 1. Ties sort by destination ID ascending. Trip length supplies packing context and does not affect scores.
+- LocalStorage keys `escapeplan.saved` and `escapeplan.checklists` preserve saved destinations and per-destination packing progress. Custom checklist items can be added and deleted; all items can be checked and unchecked. Existing checklists are reused.
+- Budget labels are illustrative preferences, not prices. All destination information is static inspiration. No accounts, APIs, databases, geolocation, maps, or live travel data.
+- Responsive CSS landscapes, semantic forms, visible focus indicators, keyboard controls, page focus management, and an accessible packing progress indicator.
+
+Saved data stays in this browser on this device. Clearing browser storage removes it. Malformed stored data falls back safely; if storage writes fail, the app continues for the session and displays a message.
 
 ## Commands
 
 | Command | Purpose |
 | --- | --- |
-| `npm run dev` | Start the development server |
-| `npm run lint` | Check JavaScript and React with Oxlint |
-| `npm run build` | Build production files in `dist/` |
-| `npm run check` | Run lint and the production build |
-| `npm run preview` | Preview a production build after building |
+| `npm run dev` | Start Vite locally |
+| `npm run lint` | Run Oxlint |
+| `npm test` | Run all Vitest tests once |
+| `npm run test:watch` | Run Vitest in watch mode |
+| `npm run build` | Build the production web app into `dist/` |
+| `npm run preview` | Serve the production build locally |
+| `npm run check` | Run lint, tests, and production build |
 
-## Project structure
+## Code guide
 
-```text
-src/
-  assets/                 Images and other imported assets
-  components/
-    AppLayout.jsx         Shared header, main content, and footer
-  pages/
-    HomePage.jsx          Initial placeholder screen
-  App.jsx                 Composes the app layout and page
-  App.css                 Layout and page styles
-  index.css               Global styles and shared CSS variables
-  main.jsx                React entry point
-public/                   Static files served without processing
-docs/frontend-checks.yml.example  Optional GitHub Actions workflow template
-```
+- `src/App.jsx`: application state, navigation, recommendations/details/saved screens, and persistence coordination.
+- `src/components/`: shared layout, illustrated landscape, and destination card.
+- `src/pages/`: Home, quiz, and packing screens.
+- `src/data/destinations.js`: local destination data and quiz choices.
+- `src/utils/recommendations.js`: pure scoring, ranking, and match explanations.
+- `src/utils/storage.js`: validated storage reads and base checklist generation.
+- `src/index.css` and `src/App.css`: global, responsive, and component styles.
+- `src/test/setup.js`: jsdom, jest-dom, cleanup, and isolated storage setup.
+- `src/test/App.test.jsx`: UI flows, validation, persistence, custom packing items, and malformed storage recovery.
+- `src/utils/recommendations.test.js`: data completeness, score weights, ordering, ties, and immutability.
 
-Keep reusable UI in `components/` and screen components in `pages/`. Add feature-specific folders as the app grows. This starter has no backend, authentication, database, or routing yet; those should follow the group's app requirements.
-
-## Working as a group
-
-1. Pull the latest `main`: `git switch main` then `git pull --ff-only`.
-2. Create a descriptive branch, for example `git switch -c feature/home-page`.
-3. Make your changes and run `npm run check`.
-4. Commit, push your branch, and open a pull request for group review.
-
-Commit `package-lock.json` when dependencies change. Use `npm ci` after pulling dependency updates. An optional GitHub Actions template is in `docs/frontend-checks.yml.example`. To enable automatic checks, a maintainer with workflow permissions can copy it to `.github/workflows/ci.yml` and push that file. Until then, run `npm run check` locally before opening a pull request.
-
-## Environment variables
-
-Local `.env` files are ignored by Git. If a feature needs configuration, add a documented `.env.example` with placeholder values. Vite exposes variables prefixed with `VITE_` to the browser, so they must never contain secrets or private API keys.
-
-## Scope
-
-This commit establishes the runnable frontend and team workflow. The placeholder page is ready to be replaced with the group's first app screen. Deployment and automated feature tests can be added when the app's requirements are defined.
+`.github/workflows/test-and-build.yml` runs on pushes to `main` and `feature/**`, and pull requests targeting `main`. It uses checkout/setup-node v4, `.nvmrc`, npm caching, `npm ci`, lint, tests, and a production build.
