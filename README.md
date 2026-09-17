@@ -15,10 +15,11 @@ Dependency installation requires access to npm. Once dependencies are installed,
 
 ## Features
 
-- Home, preferences quiz, top-three recommendations, destination details, packing checklists, and saved trips.
+- Home, preferences quiz, top-three recommendations, destination details, packing checklists, and My Trip.
 - Exactly 15 sample destinations: three each for Beach, Mountains, City, Theme Park, and Camping.
 - Category match: 5 points; budget match: 3; travel preference match: 2; each distinct matching activity: 1. Ties sort by destination ID ascending. Trip length supplies packing context and does not affect scores.
-- LocalStorage keys `escapeplan.saved` and `escapeplan.checklists` preserve saved destinations and per-destination packing progress. Custom checklist items can be added and deleted; all items can be checked and unchecked. Existing checklists are reused.
+- Choose one destination as My Trip from destination details. My Trip shows its description, location, category, highlights, activities, selected trip length when available, and an interactive packing checklist with progress. Replacing or clearing My Trip requires confirmation; existing packing lists are kept.
+- LocalStorage keys `escapeplan.currentTrip` and `escapeplan.checklists` preserve the current destination with its selected trip length and per-destination packing progress. Custom checklist items can be added and deleted; all items can be checked and unchecked. Existing checklists are reused. The former `escapeplan.saved` collection is no longer used; choose a destination to start My Trip.
 - Budget labels are illustrative preferences, not prices. All destination information is static inspiration. No accounts, APIs, databases, geolocation, maps, or live travel data.
 - Responsive CSS landscapes, semantic forms, visible focus indicators, keyboard controls, page focus management, and an accessible packing progress indicator.
 
@@ -38,9 +39,9 @@ Saved data stays in this browser on this device. Clearing browser storage remove
 
 ## Code guide
 
-- `src/App.jsx`: application state, navigation, recommendations/details/saved screens, and persistence coordination.
+- `src/App.jsx`: application state, navigation, recommendations/details screens, current-trip selection and confirmation, and persistence coordination.
 - `src/components/`: shared layout, illustrated landscape, and destination card.
-- `src/pages/`: Home, quiz, and packing screens.
+- `src/pages/`: Home, quiz, packing, and My Trip screens. My Trip reuses the packing screen's checklist controls.
 - `src/data/destinations.js`: local destination data and quiz choices.
 - `src/utils/recommendations.js`: pure scoring, ranking, and match explanations.
 - `src/utils/storage.js`: validated storage reads and base checklist generation.

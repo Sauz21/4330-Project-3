@@ -1,11 +1,5 @@
 ﻿import { useEffect, useRef } from "react";
-export default function AppLayout({
-  children,
-  page,
-  navigate,
-  canRecommend,
-  savedCount,
-}) {
+export default function AppLayout({ children, page, navigate, canRecommend }) {
   const main = useRef(null);
   useEffect(() => {
     main.current?.focus();
@@ -15,7 +9,7 @@ export default function AppLayout({
     ["home", "⌂", "Home"],
     ...(canRecommend ? [["recommendations", "✧", "Recommendations"]] : []),
     ["packing", "✓", "Packing"],
-    ["saved", "♡", "Saved Trips"],
+    ["my-trip", "♡", "My Trip"],
   ];
   return (
     <div className="app-shell">
@@ -31,9 +25,8 @@ export default function AppLayout({
           <span className="brand-mark">↗</span> EscapePlan
           <span className="brand-dot">.</span>
         </button>
-        <button className="saved-link" onClick={() => navigate("saved")}>
-          ♡ <span>Saved trips</span>
-          <span className="count">{savedCount}</span>
+        <button className="saved-link" onClick={() => navigate("my-trip")}>
+          <span aria-hidden="true">♡</span> <span>My Trip</span>
         </button>
       </header>
       <main id="main-content" ref={main} tabIndex={-1}>
