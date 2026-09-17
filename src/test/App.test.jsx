@@ -60,8 +60,9 @@ it("checks a packing item, updates progress, and persists after remounting", asy
   expect(screen.getByRole("status")).toHaveTextContent("1 of 8 items packed");
   view.unmount();
   render(<App />);
-  await user.click(screen.getByRole("button", { name: "Packing" }));
-  await user.click(screen.getByRole("button", { name: "Open checklist" }));
+  expect(
+    screen.getByRole("heading", { name: "Pack for Gulf Shores." }),
+  ).toBeInTheDocument();
   expect(
     screen.getByRole("checkbox", { name: "Everyday outfits" }),
   ).toBeChecked();
@@ -115,7 +116,7 @@ it("chooses one My Trip with destination details, trip length and persistent pac
   expect(screen.getByRole("progressbar")).toHaveAttribute("value", "1");
   view.unmount();
   render(<App />);
-  await openMyTrip(user);
+  expect(screen.getByRole("heading", { name: "My Trip" })).toBeInTheDocument();
   expect(
     screen.getByRole("heading", { name: "Gulf Shores" }),
   ).toBeInTheDocument();
@@ -164,7 +165,7 @@ it("replaces My Trip only after confirmation and persists the replacement", asyn
   ).toBe(true);
   view.unmount();
   render(<App />);
-  await openMyTrip(user);
+  expect(screen.getByRole("heading", { name: "My Trip" })).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Maui" })).toBeInTheDocument();
 });
 it("clears My Trip only after confirmation and keeps packing progress", async () => {

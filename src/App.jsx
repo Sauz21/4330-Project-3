@@ -1,5 +1,6 @@
 ﻿import { useState } from "react";
 import AppLayout from "./components/AppLayout.jsx";
+import { useEffect, useRef } from "react";
 import HomePage from "./pages/HomePage.jsx";
 import QuizPage from "./pages/QuizPage.jsx";
 import PackingPage from "./pages/PackingPage.jsx";
@@ -13,39 +14,57 @@ import {
   createChecklist,
   validChecklists,
 } from "./utils/storage.js";
+import {
+  emptyPreferences,
+  loadPlanningSession,
+  PLANNING_SESSION_KEY,
+  PLANNING_SESSION_VERSION,
+} from "./utils/planningSession.js";
 import "./App.css";
-const emptyPreferences = {
-  category: "",
-  budgetLevel: "",
-  travelPreference: "",
-  tripLength: "",
-  activities: [],
-};
 export default function App() {
-  const [page, setPage] = useState("home");
-  const [history, setHistory] = useState([]);
-  const [preferences, setPreferences] = useState(emptyPreferences);
-  const [draft, setDraft] = useState(emptyPreferences);
-  const [hasResults, setHasResults] = useState(false);
-  const [selected, setSelected] = useState(null);
-  const [packingOverview, setPackingOverview] = useState(false);
-  const [currentTrip, setCurrentTrip] = useState(() =>
-    readStorage(
-      "escapeplan.currentTrip",
-      null,
-      (value) =>
-        value !== null &&
-        typeof value === "object" &&
-        destinations.some(
-          (destination) => destination.id === value.destinationId,
-        ) &&
-        ["", "2", "5", "7", "14"].includes(value.tripLength),
-    ),
+  // Read once, before the persistence effect can write the initial screen.
+  const [initialSession] = useState(loadPlanningSession);
+  const [page, setPage] = useState(initialSession?.page ?? "home");
+  const [history, setHistory] = useState(initialSession?.history ?? []);
+  const [preferences, setPreferences] = useState(
+    initialSession?.preferences ?? emptyPreferences,
   );
-  const [checklists, setChecklists] = useState(() =>
-    readStorage("escapeplan.checklists", {}, validChecklists),
+  const [draft, setDraft] = useState(initialSession?.draft ?? emptyPreferences);
+  const [hasResults, setHasResults] = useState(
+    initialSession?.hasResults ?? false,
+  );
+  const [selected, setSelected] = useState(
+    () =>
+      destinations.find(
+        (destination) =>
+          destination.id === initialSession?.selectedDestinationId,
+      ) ?? null,
+  );
+  const [packingOverview, setPackingOverview] = useState(
+    initialSession?.packingOverview ?? false,
+  );
+  const [currentTrip, setCurrentTrip] = useState(() =>
+    initialSession
+      ? initialSession.currentTrip
+      : readStorage(
+          "escapeplan.currentTrip",
+          null,
+          (value) =>
+            value !== null &&
+            typeof value === "object" &&
+            destinations.some(
+              (destination) => destination.id === value.destinationId,
+            ) &&
+            ["", "2", "5", "7", "14"].includes(value.tripLength),
+        ),
+  );
+  const [checklists, setChecklists] = useState(
+    () =>
+      initialSession?.checklists ??
+      readStorage("escapeplan.checklists", {}, validChecklists),
   );
   const [storageError, setStorageError] = useState("");
+  const skipSessionPersist = useRef(false);
   function persist(key, value) {
     try {
       localStorage.setItem(key, JSON.stringify(value));
@@ -56,6 +75,34 @@ export default function App() {
       );
     }
   }
+  useEffect(() => {
+    if (skipSessionPersist.current) {
+      skipSessionPersist.current = false;
+      return;
+    }
+    persist(PLANNING_SESSION_KEY, {
+      version: PLANNING_SESSION_VERSION,
+      page,
+      history,
+      preferences,
+      draft,
+      hasResults,
+      selectedDestinationId: selected?.id ?? null,
+      packingOverview,
+      currentTrip,
+      checklists,
+    });
+  }, [
+    page,
+    history,
+    preferences,
+    draft,
+    hasResults,
+    selected,
+    packingOverview,
+    currentTrip,
+    checklists,
+  ]);
   function navigate(target) {
     if (target !== page) {
       setHistory([...history, page]);
@@ -102,6 +149,34 @@ export default function App() {
     setCurrentTrip(null);
     persist("escapeplan.currentTrip", null);
   }
+  function resetPlan() {
+    if (
+      !window.confirm(
+        "Reset your EscapePlan? This clears My Trip, preferences, and packing progress.",
+      )
+    )
+      return;
+    try {
+      localStorage.removeItem(PLANNING_SESSION_KEY);
+      localStorage.removeItem("escapeplan.currentTrip");
+      localStorage.removeItem("escapeplan.checklists");
+      setStorageError("");
+    } catch {
+      setStorageError(
+        "Device storage is unavailable. Your plan was reset for this session only.",
+      );
+    }
+    skipSessionPersist.current = true;
+    setPage("home");
+    setHistory([]);
+    setPreferences(emptyPreferences);
+    setDraft(emptyPreferences);
+    setHasResults(false);
+    setSelected(null);
+    setPackingOverview(false);
+    setCurrentTrip(null);
+    setChecklists({});
+  }
   function updateChecklist(id, items) {
     const next = { ...checklists, [id]: items };
     setChecklists(next);
@@ -122,7 +197,12 @@ export default function App() {
     (destination) => destination.id === currentTrip?.destinationId,
   );
   return (
-    <AppLayout page={page} navigate={navigate} canRecommend={hasResults}>
+    <AppLayout
+      page={page}
+      navigate={navigate}
+      canRecommend={hasResults}
+      onReset={resetPlan}
+    >
       {storageError && (
         <p className="error" role="alert">
           {storageError}
@@ -134,6 +214,7 @@ export default function App() {
       {page === "quiz" && (
         <QuizPage
           preferences={draft}
+          onChange={setDraft}
           onBack={back}
           onSubmit={(value) => {
             setPreferences(value);

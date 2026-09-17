@@ -1,6 +1,12 @@
 import { useEffect, useRef } from "react";
 import ThemeToggle from "./ThemeToggle.jsx";
-export default function AppLayout({ children, page, navigate, canRecommend }) {
+export default function AppLayout({
+  children,
+  page,
+  navigate,
+  canRecommend,
+  onReset,
+}) {
   const main = useRef(null);
   useEffect(() => {
     main.current?.focus();
@@ -28,6 +34,9 @@ export default function AppLayout({ children, page, navigate, canRecommend }) {
         </button>
         <div className="header-actions">
           <ThemeToggle />
+          <button className="text-button reset-plan" onClick={onReset}>
+            Reset Plan
+          </button>
           <button
             className="saved-link"
             onClick={() => navigate("my-trip")}
