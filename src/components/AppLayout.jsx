@@ -1,4 +1,5 @@
-﻿import { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
+import ThemeToggle from "./ThemeToggle.jsx";
 export default function AppLayout({ children, page, navigate, canRecommend }) {
   const main = useRef(null);
   useEffect(() => {
@@ -25,9 +26,15 @@ export default function AppLayout({ children, page, navigate, canRecommend }) {
           <span className="brand-mark">↗</span> EscapePlan
           <span className="brand-dot">.</span>
         </button>
-        <button className="saved-link" onClick={() => navigate("my-trip")}>
-          <span aria-hidden="true">♡</span> <span>My Trip</span>
-        </button>
+        <div className="header-actions">
+          <ThemeToggle />
+          <button
+            className="saved-link"
+            onClick={() => navigate("my-trip")}
+          >
+            <span aria-hidden="true">♡</span> <span>My Trip</span>
+          </button>
+        </div>
       </header>
       <main id="main-content" ref={main} tabIndex={-1}>
         {children}
