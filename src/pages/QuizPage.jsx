@@ -1,8 +1,12 @@
 ﻿import { useState } from "react";
 import { categories, activities, categoryIcons } from "../data/destinations.js";
-export default function QuizPage({ preferences, onSubmit, onBack }) {
+export default function QuizPage({ preferences, onChange, onSubmit, onBack }) {
   const [form, setForm] = useState(preferences);
   const [error, setError] = useState("");
+  function updateForm(next) {
+    setForm(next);
+    onChange(next);
+  }
   function submit(event) {
     event.preventDefault();
     if (
@@ -40,7 +44,7 @@ export default function QuizPage({ preferences, onSubmit, onBack }) {
                   name="category"
                   value={category}
                   checked={form.category === category}
-                  onChange={() => setForm({ ...form, category })}
+                  onChange={() => updateForm({ ...form, category })}
                 />
                 <span aria-hidden="true">{categoryIcons[category]}</span>
                 {category}
@@ -85,7 +89,7 @@ export default function QuizPage({ preferences, onSubmit, onBack }) {
               <select
                 value={form[key]}
                 onChange={(event) =>
-                  setForm({ ...form, [key]: event.target.value })
+                  updateForm({ ...form, [key]: event.target.value })
                 }
                 required
               >
@@ -115,7 +119,7 @@ export default function QuizPage({ preferences, onSubmit, onBack }) {
                   type="checkbox"
                   checked={form.activities.includes(activity)}
                   onChange={(event) =>
-                    setForm({
+                    updateForm({
                       ...form,
                       activities: event.target.checked
                         ? [...form.activities, activity]

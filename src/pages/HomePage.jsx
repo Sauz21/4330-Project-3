@@ -86,8 +86,7 @@ export default function HomePage({ startQuiz, navigate }) {
         <div>
           <p className="eyebrow">LESS OVERTHINKING. MORE EXPLORING.</p>
           <h2>
-            A great escape,{" "}
-            <br />
+            A great escape, <br />
             in three little steps.
           </h2>
         </div>
@@ -106,7 +105,7 @@ export default function HomePage({ startQuiz, navigate }) {
             [
               "03",
               "Pack & look forward",
-              "Save your favorites and tick off the essentials.",
+              "Choose My Trip and tick off the essentials.",
             ],
           ].map(([number, title, description]) => (
             <div className="step" key={number}>
@@ -125,10 +124,10 @@ export default function HomePage({ startQuiz, navigate }) {
         </span>
         <div>
           <h2>Keep a little adventure in your pocket.</h2>
-          <p>Your saved places and packing lists, right here on this device.</p>
+          <p>My Trip and your packing checklist, right here on this device.</p>
         </div>
-        <button className="secondary" onClick={() => navigate("saved")}>
-          View saved trips ↗
+        <button className="secondary" onClick={() => navigate("my-trip")}>
+          View My Trip ↗
         </button>
       </section>
     </>

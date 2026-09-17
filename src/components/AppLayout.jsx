@@ -5,7 +5,7 @@ export default function AppLayout({
   page,
   navigate,
   canRecommend,
-  savedCount,
+  onReset,
 }) {
   const main = useRef(null);
   useEffect(() => {
@@ -16,7 +16,7 @@ export default function AppLayout({
     ["home", "⌂", "Home"],
     ...(canRecommend ? [["recommendations", "✧", "Recommendations"]] : []),
     ["packing", "✓", "Packing"],
-    ["saved", "♡", "Saved Trips"],
+    ["my-trip", "♡", "My Trip"],
   ];
   return (
     <div className="app-shell">
@@ -34,13 +34,14 @@ export default function AppLayout({
         </button>
         <div className="header-actions">
           <ThemeToggle />
+          <button className="text-button reset-plan" onClick={onReset}>
+            Reset Plan
+          </button>
           <button
-            aria-label={`Saved trips (${savedCount})`}
             className="saved-link"
-            onClick={() => navigate("saved")}
+            onClick={() => navigate("my-trip")}
           >
-            ♡ <span>Saved trips</span>
-            <span className="count">{savedCount}</span>
+            <span aria-hidden="true">♡</span> <span>My Trip</span>
           </button>
         </div>
       </header>

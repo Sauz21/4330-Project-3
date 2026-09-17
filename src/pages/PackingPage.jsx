@@ -5,6 +5,7 @@ export default function PackingPage({
   onUpdate,
   tripLength,
   onBack,
+  embedded = false,
 }) {
   const [custom, setCustom] = useState("");
   const [error, setError] = useState("");
@@ -29,19 +30,25 @@ export default function PackingPage({
     setError("");
   }
   return (
-    <section className="page narrow">
-      <button className="back" onClick={onBack}>
-        ← Back
-      </button>
-      <p className="eyebrow">A LITTLE PREPARATION. A LIGHTER MIND.</p>
-      <h1>
-        Pack for <em>{destination.name}.</em>
-      </h1>
-      <p className="intro">
-        Your essentials, all in one place.
-        {tripLength &&
-          ` Plan enough clothing and personal essentials for ${tripLength} days.`}
-      </p>
+    <section className={embedded ? "narrow" : "page narrow"}>
+      {embedded ? (
+        <h2>Packing checklist</h2>
+      ) : (
+        <>
+          <button className="back" onClick={onBack}>
+            ← Back
+          </button>
+          <p className="eyebrow">A LITTLE PREPARATION. A LIGHTER MIND.</p>
+          <h1>
+            Pack for <em>{destination.name}.</em>
+          </h1>
+          <p className="intro">
+            Your essentials, all in one place.
+            {tripLength &&
+              ` Plan enough clothing and personal essentials for ${tripLength} days.`}
+          </p>
+        </>
+      )}
       <div className="packing-panel">
         <div className="progress-copy">
           <h2>Ready, set, almost.</h2>
