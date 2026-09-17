@@ -1,4 +1,4 @@
-﻿# EscapePlan
+# EscapePlan
 
 A mobile-first vacation recommendation and packing assistant built in the existing React 19 + Vite project with plain JavaScript and CSS.
 
@@ -14,6 +14,8 @@ npm run dev
 Dependency installation requires access to npm. Once dependencies are installed, the application runs against the local Vite server without internet access. Production files in `dist/` can be served by a local static server (`npm run preview` after building). The app makes no API or external asset requests. It is a Vite web application, not an APK, and does not install a service worker for hosted-site offline reloads.
 
 ## Features
+
+- Header dark-mode toggle with a saved preference (`escapeplan.theme`). On first visit, the app uses the device theme. The toggle remains usable if browser storage is blocked.
 
 - Home, preferences quiz, top-three recommendations, destination details, packing checklists, and saved trips.
 - Exactly 15 sample destinations: three each for Beach, Mountains, City, Theme Park, and Camping.
