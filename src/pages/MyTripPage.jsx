@@ -1,5 +1,6 @@
 import PackingPage from "./PackingPage.jsx";
 
+
 export default function MyTripPage({
   destination,
   tripLength,
@@ -7,6 +8,8 @@ export default function MyTripPage({
   onUpdate,
   onClear,
   onBack,
+  previousTrips,
+  onSelectPreviousTrip,
 }) {
   return (
     <section className="page">
@@ -48,6 +51,37 @@ export default function MyTripPage({
         items={items}
         onUpdate={onUpdate}
       />
+      {previousTrips.length > 0 && (
+  <section className="previous-trips">
+    <h2>Previous Trips</h2>
+
+    <div className="destination-grid">
+      {previousTrips.map((trip) => (
+        <article className="packing-summary" key={trip.destinationId}>
+          <h3>{trip.name}</h3>
+
+          <p>
+            {trip.category} / {trip.location}
+          </p>
+
+          {trip.tripLength && (
+            <p>Trip length: {trip.tripLength} days</p>
+          )}
+
+          <button
+            className="primary"
+            onClick={() => onSelectPreviousTrip(trip)}
+          >
+            Use This Trip
+          </button>
+        </article>
+      ))}
+    </div>
+  </section>
+)}
     </section>
   );
 }
+
+
+

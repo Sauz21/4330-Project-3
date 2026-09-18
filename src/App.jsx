@@ -21,6 +21,7 @@ import {
   PLANNING_SESSION_VERSION,
 } from "./utils/planningSession.js";
 import "./App.css";
+
 export default function App() {
   // Read once, before the persistence effect can write the initial screen.
   const [initialSession] = useState(loadPlanningSession);
@@ -29,7 +30,9 @@ export default function App() {
   const [preferences, setPreferences] = useState(
     initialSession?.preferences ?? emptyPreferences,
   );
-  const [draft, setDraft] = useState(initialSession?.draft ?? emptyPreferences);
+  const [draft, setDraft] = useState(
+    initialSession?.draft ?? emptyPreferences,
+  );
   const [hasResults, setHasResults] = useState(
     initialSession?.hasResults ?? false,
   );
@@ -63,8 +66,12 @@ export default function App() {
       initialSession?.checklists ??
       readStorage("escapeplan.checklists", {}, validChecklists),
   );
+  const [previousTrips, setPreviousTrips] = useState(
+    () => readStorage("escapeplan.previousTrips", [], Array.isArray),
+  );
   const [storageError, setStorageError] = useState("");
   const skipSessionPersist = useRef(false);
+
   function persist(key, value) {
     try {
       localStorage.setItem(key, JSON.stringify(value));
@@ -75,11 +82,13 @@ export default function App() {
       );
     }
   }
+
   useEffect(() => {
     if (skipSessionPersist.current) {
       skipSessionPersist.current = false;
       return;
     }
+
     persist(PLANNING_SESSION_KEY, {
       version: PLANNING_SESSION_VERSION,
       page,
@@ -103,52 +112,148 @@ export default function App() {
     currentTrip,
     checklists,
   ]);
+
   function navigate(target) {
     if (target !== page) {
       setHistory([...history, page]);
       setPage(target);
     }
   }
+
   function back() {
     setPage(history.at(-1) || "home");
     setHistory(history.slice(0, -1));
   }
+
   function startQuiz(category) {
-    setDraft({ ...preferences, category: category || preferences.category });
+    setDraft({
+      ...preferences,
+      category: category || preferences.category,
+    });
     navigate("quiz");
   }
+
   function open(destination) {
     setSelected(destination);
     navigate("details");
   }
-  function chooseTrip(destination) {
+
+  function chooseTrip(destination, tripLength) {
     if (currentTrip?.destinationId === destination.id) {
       navigate("my-trip");
       return;
     }
-    if (
-      currentTrip &&
-      !window.confirm(
-        `Replace ${tripDestination.name} with ${destination.name} as My Trip? Your packing lists will be kept.`,
-      )
-    )
-      return;
+
+    if (currentTrip && currentTrip.destinationId !== destination.id) {
+      const tripDestination = destinations.find(
+        (item) => item.id === currentTrip.destinationId,
+      );
+
+      if (
+        !window.confirm(
+          `Replace ${
+            tripDestination?.name || "your current trip"
+          } with ${destination.name}?`,
+        )
+      ) {
+        return;
+      }
+
+      if (tripDestination) {
+        const oldTrip = {
+          destinationId: tripDestination.id,
+          name: tripDestination.name,
+          category: tripDestination.category,
+          location: tripDestination.location,
+          tripLength: currentTrip.tripLength,
+        };
+
+        const updatedPreviousTrips = [
+          oldTrip,
+          ...previousTrips.filter(
+            (trip) => trip.destinationId !== oldTrip.destinationId,
+          ),
+        ];
+
+        setPreviousTrips(updatedPreviousTrips);
+        persist("escapeplan.previousTrips", updatedPreviousTrips);
+      }
+    }
+
     const next = {
       destinationId: destination.id,
-      tripLength: preferences.tripLength,
+      tripLength:
+        tripLength || currentTrip?.tripLength || preferences.tripLength,
     };
+
     setCurrentTrip(next);
     persist("escapeplan.currentTrip", next);
-    if (!checklists[destination.id])
+
+    if (!checklists[destination.id]) {
       updateChecklist(destination.id, createChecklist(destination));
+    }
+
     navigate("my-trip");
   }
+
   function clearTrip() {
-    if (!window.confirm("Clear My Trip? Your packing lists will be kept."))
+    if (!currentTrip) return;
+
+    const destination = destinations.find(
+      (item) => item.id === currentTrip.destinationId,
+    );
+
+    if (!window.confirm("Clear My Trip?")) {
       return;
+    }
+
+    if (destination) {
+      const oldTrip = {
+        destinationId: destination.id,
+        name: destination.name,
+        category: destination.category,
+        location: destination.location,
+        tripLength: currentTrip.tripLength,
+      };
+
+      const updatedPreviousTrips = [
+        oldTrip,
+        ...previousTrips.filter(
+          (trip) => trip.destinationId !== oldTrip.destinationId,
+        ),
+      ];
+
+      setPreviousTrips(updatedPreviousTrips);
+      persist("escapeplan.previousTrips", updatedPreviousTrips);
+    }
+
     setCurrentTrip(null);
     persist("escapeplan.currentTrip", null);
+    navigate("my-trip");
   }
+
+  function selectPreviousTrip(trip) {
+    const destination = destinations.find(
+      (item) => item.id === trip.destinationId,
+    );
+
+    if (!destination) return;
+
+    const next = {
+      destinationId: destination.id,
+      tripLength: trip.tripLength || "",
+    };
+
+    setCurrentTrip(next);
+    persist("escapeplan.currentTrip", next);
+
+    if (!checklists[destination.id]) {
+      updateChecklist(destination.id, createChecklist(destination));
+    }
+
+    navigate("my-trip");
+  }
+
   function resetPlan() {
     if (
       !window.confirm(
@@ -156,6 +261,7 @@ export default function App() {
       )
     )
       return;
+
     try {
       localStorage.removeItem(PLANNING_SESSION_KEY);
       localStorage.removeItem("escapeplan.currentTrip");
@@ -166,6 +272,7 @@ export default function App() {
         "Device storage is unavailable. Your plan was reset for this session only.",
       );
     }
+
     skipSessionPersist.current = true;
     setPage("home");
     setHistory([]);
@@ -177,25 +284,35 @@ export default function App() {
     setCurrentTrip(null);
     setChecklists({});
   }
+
   function updateChecklist(id, items) {
     const next = { ...checklists, [id]: items };
     setChecklists(next);
     persist("escapeplan.checklists", next);
   }
+
   function pack(destination) {
     setSelected(destination);
     setPackingOverview(false);
-    if (!checklists[destination.id])
+
+    if (!checklists[destination.id]) {
       updateChecklist(destination.id, createChecklist(destination));
+    }
+
     navigate("packing");
   }
+
   const results = hasResults
     ? getRecommendations(destinations, preferences)
     : [];
-  const activePacking = !packingOverview && selected && checklists[selected.id];
+
+  const activePacking =
+    !packingOverview && selected && checklists[selected.id];
+
   const tripDestination = destinations.find(
     (destination) => destination.id === currentTrip?.destinationId,
   );
+
   return (
     <AppLayout
       page={page}
@@ -208,9 +325,11 @@ export default function App() {
           {storageError}
         </p>
       )}
+
       {page === "home" && (
         <HomePage startQuiz={startQuiz} navigate={navigate} />
       )}
+
       {page === "quiz" && (
         <QuizPage
           preferences={draft}
@@ -223,23 +342,29 @@ export default function App() {
           }}
         />
       )}
+
       {page === "recommendations" && (
         <section className="page">
           <button className="back" onClick={back}>
             ← Back
           </button>
+
           <p className="eyebrow">A FEW PLACES WITH YOUR NAME ON THEM</p>
+
           <h1>
             Your next escape <em>awaits.</em>
           </h1>
+
           <div className="section-heading">
             <p className="intro">
               Three ideas for your {preferences.tripLength}-day getaway.
             </p>
+
             <button className="secondary" onClick={() => startQuiz()}>
               Edit preferences
             </button>
           </div>
+
           <div className="destination-grid">
             {results.map((destination, index) => (
               <DestinationCard
@@ -256,30 +381,39 @@ export default function App() {
               </DestinationCard>
             ))}
           </div>
+
           <p className="quiet-note">
-            Curated offline inspiration. Budget styles are illustrative; no live
-            travel information is used.
+            Curated offline inspiration. Budget styles are illustrative; no
+            live travel information is used.
           </p>
         </section>
       )}
+
       {page === "details" && selected && (
         <section className="page">
           <button className="back" onClick={back}>
             ← Back
           </button>
+
           <div className="detail-grid">
             <div>
               <p className="eyebrow">
                 {selected.category} / {selected.location}
               </p>
+
               <h1>
                 Say hello to <em>{selected.name}.</em>
               </h1>
+
               <p className="intro">{selected.description}</p>
+
               <div className="tags">
                 <span className="tag">{selected.category}</span>
-                <span className="tag">{selected.budgetLevel} budget style</span>
+                <span className="tag">
+                  {selected.budgetLevel} budget style
+                </span>
               </div>
+
               <div className="button-row">
                 <button
                   className="secondary"
@@ -289,13 +423,19 @@ export default function App() {
                     ? "View My Trip"
                     : "Choose as My Trip"}
                 </button>
-                <button className="primary" onClick={() => pack(selected)}>
+
+                <button
+                  className="primary"
+                  onClick={() => pack(selected)}
+                >
                   Create packing checklist ↗
                 </button>
               </div>
             </div>
+
             <Landscape category={selected.category} />
           </div>
+
           <div className="detail-sections">
             <section>
               <h2>The little highlights</h2>
@@ -305,6 +445,7 @@ export default function App() {
                 ))}
               </ul>
             </section>
+
             <section>
               <h2>Make time for</h2>
               <ul>
@@ -313,6 +454,7 @@ export default function App() {
                 ))}
               </ul>
             </section>
+
             <section>
               <h2>Bring along</h2>
               <ul>
@@ -322,12 +464,14 @@ export default function App() {
               </ul>
             </section>
           </div>
+
           <p className="quiet-note">
-            Suggestions from our local collection. Adapt your plans and packing
-            to your own needs.
+            Suggestions from our local collection. Adapt your plans and
+            packing to your own needs.
           </p>
         </section>
       )}
+
       {page === "packing" &&
         (activePacking ? (
           <PackingPage
@@ -347,10 +491,13 @@ export default function App() {
             <button className="back" onClick={back}>
               ← Back
             </button>
+
             <p className="eyebrow">BRING THE GOOD STUFF</p>
+
             <h1>
               Your packing <em>corner.</em>
             </h1>
+
             {Object.keys(checklists).some((id) =>
               destinations.some((destination) => destination.id === id),
             ) ? (
@@ -358,8 +505,12 @@ export default function App() {
                 {destinations
                   .filter((destination) => checklists[destination.id])
                   .map((destination) => (
-                    <article className="packing-summary" key={destination.id}>
+                    <article
+                      className="packing-summary"
+                      key={destination.id}
+                    >
                       <h2>{destination.name}</h2>
+
                       <p>
                         {
                           checklists[destination.id].filter(
@@ -368,6 +519,7 @@ export default function App() {
                         }{" "}
                         of {checklists[destination.id].length} items packed
                       </p>
+
                       <button
                         className="primary"
                         onClick={() => pack(destination)}
@@ -380,15 +532,24 @@ export default function App() {
             ) : (
               <div className="empty-state">
                 <span aria-hidden="true">✓</span>
+
                 <h2>A little planning goes a long way.</h2>
-                <p>Find a destination and create a checklist to get started.</p>
-                <button className="primary" onClick={() => startQuiz()}>
+
+                <p>
+                  Find a destination and create a checklist to get started.
+                </p>
+
+                <button
+                  className="primary"
+                  onClick={() => startQuiz()}
+                >
                   Plan a trip ↗
                 </button>
               </div>
             )}
           </section>
         ))}
+
       {page === "packing" && activePacking && (
         <div className="packing-switch">
           <button
@@ -399,32 +560,47 @@ export default function App() {
           </button>
         </div>
       )}
+
       {page === "my-trip" && tripDestination && (
         <MyTripPage
           destination={tripDestination}
           tripLength={currentTrip.tripLength}
           items={
-            checklists[tripDestination.id] ?? createChecklist(tripDestination)
+            checklists[tripDestination.id] ??
+            createChecklist(tripDestination)
           }
-          onUpdate={(items) => updateChecklist(tripDestination.id, items)}
+          onUpdate={(items) =>
+            updateChecklist(tripDestination.id, items)
+          }
           onClear={clearTrip}
           onBack={back}
+          previousTrips={previousTrips}
+          onSelectPreviousTrip={selectPreviousTrip}
         />
       )}
+
       {page === "my-trip" && !tripDestination && (
         <section className="page">
           <button className="back" onClick={back}>
             ← Back
           </button>
+
           <h1>My Trip</h1>
+
           <div className="empty-state">
             <span aria-hidden="true">♡</span>
+
             <h2>Your next adventure belongs here.</h2>
+
             <p>
               Choose a destination as My Trip to keep your plans and packing
               checklist together.
             </p>
-            <button className="primary" onClick={() => startQuiz()}>
+
+            <button
+              className="primary"
+              onClick={() => startQuiz()}
+            >
               Find my escape ↗
             </button>
           </div>

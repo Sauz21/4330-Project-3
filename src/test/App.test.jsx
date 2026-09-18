@@ -155,8 +155,8 @@ it("replaces My Trip only after confirmation and persists the replacement", asyn
   await user.click(screen.getByRole("button", { name: "Choose as My Trip" }));
   expect(screen.getByRole("heading", { name: "Maui" })).toBeInTheDocument();
   expect(
-    screen.queryByRole("heading", { name: "Gulf Shores" }),
-  ).not.toBeInTheDocument();
+  screen.getByRole("heading", { name: "Gulf Shores" }),
+).toBeInTheDocument();
   expect(
     screen.getByRole("checkbox", { name: "Everyday outfits" }),
   ).not.toBeChecked();
@@ -240,3 +240,6 @@ it("recovers from malformed local storage", () => {
     screen.getByRole("button", { name: "Plan a trip" }),
   ).toBeInTheDocument();
 });
+
+
+
