@@ -1,4 +1,5 @@
 ﻿import { useState } from "react";
+
 export default function PackingPage({
   destination,
   items,
@@ -10,13 +11,19 @@ export default function PackingPage({
   const [custom, setCustom] = useState("");
   const [error, setError] = useState("");
   const completed = items.filter((item) => item.checked).length;
+  const progress = items.length
+    ? Math.round((completed / items.length) * 100)
+    : 0;
+
   function add(event) {
     event.preventDefault();
     const name = custom.trim();
+
     if (!name) {
       setError("Enter an item to add to your checklist.");
       return;
     }
+
     onUpdate([
       ...items,
       {
@@ -26,9 +33,11 @@ export default function PackingPage({
         custom: true,
       },
     ]);
+
     setCustom("");
     setError("");
   }
+
   return (
     <section className={embedded ? "narrow" : "page narrow"}>
       {embedded ? (
@@ -38,10 +47,13 @@ export default function PackingPage({
           <button className="back" onClick={onBack}>
             ← Back
           </button>
+
           <p className="eyebrow">A LITTLE PREPARATION. A LIGHTER MIND.</p>
+
           <h1>
             Pack for <em>{destination.name}.</em>
           </h1>
+
           <p className="intro">
             Your essentials, all in one place.
             {tripLength &&
@@ -49,18 +61,22 @@ export default function PackingPage({
           </p>
         </>
       )}
+
       <div className="packing-panel">
         <div className="progress-copy">
           <h2>Ready, set, almost.</h2>
+
           <p role="status">
-            {completed} of {items.length} items packed
+            {completed} of {items.length} items packed ({progress}%)
           </p>
         </div>
+
         <progress
           aria-label="Packing progress"
           value={completed}
           max={items.length || 1}
         />
+
         <ul className="packing-list">
           {items.map((item) => (
             <li key={item.id} className={item.checked ? "completed" : ""}>
@@ -78,8 +94,10 @@ export default function PackingPage({
                     )
                   }
                 />
+
                 <span>{item.name}</span>
               </label>
+
               {item.custom && (
                 <button
                   className="delete-button"
@@ -94,8 +112,10 @@ export default function PackingPage({
             </li>
           ))}
         </ul>
+
         <form onSubmit={add} className="custom-form">
           <label htmlFor="custom-item">Something else coming along?</label>
+
           <div>
             <input
               id="custom-item"
@@ -104,10 +124,12 @@ export default function PackingPage({
               onChange={(event) => setCustom(event.target.value)}
               placeholder="e.g. My favorite book"
             />
+
             <button className="primary" type="submit">
               Add item
             </button>
           </div>
+
           {error && (
             <p role="alert" className="error">
               {error}
@@ -115,6 +137,7 @@ export default function PackingPage({
           )}
         </form>
       </div>
+
       <p className="quiet-note">
         Progress is saved on this device. A starting list, ready to make your
         own.
